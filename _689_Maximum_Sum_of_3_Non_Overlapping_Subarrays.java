@@ -1,4 +1,7 @@
-// import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 // class Solution {
 
@@ -57,47 +60,85 @@
 // }
 class Solution {
 
+  private Map<String, Integer> memo;
+  private int[] buff;
+
+  private void solve(
+    int index,
+    ArrayList<Integer> ans,
+    int[] nums,
+    int k,
+    int count,
+    ArrayList<Integer> prefix
+  ) {
+    if (count == 0) {
+      this.buff = ans.stream().mapToInt(Integer::intValue).toArray();
+      return;
+    }
+    if (index >= nums.length) return;
+
+    int consider_i =
+      prefix.get(index) + presolve(index + k, ans, nums, k, count - 1, prefix);
+    int dont_consider_i = presolve(index + 1, ans, nums, k, count, prefix);
+    if (consider_i >= dont_consider_i) {
+      ans.add(index);
+      solve(index + k, ans, nums, k, count - 1, prefix);
+      ans.remove(ans.size() - 1);
+    } else solve(index + 1, ans, nums, k, count, prefix);
+  }
+
+  private int presolve(
+    int index,
+    ArrayList<Integer> ans,
+    int[] nums,
+    int k,
+    int count,
+    ArrayList<Integer> prefix
+  ) {
+    if (count == 0) return 0;
+    if (index >= prefix.size()) return Integer.MIN_VALUE;
+
+    String key = index + ":" + count;
+    if (this.memo.containsKey(key)) return this.memo.get(key);
+
+    int consider_i =
+      prefix.get(index) + presolve(index + k, ans, nums, k, count - 1, prefix);
+    int dont_consider_i = presolve(index + 1, ans, nums, k, count, prefix);
+    int n = Math.max(consider_i, dont_consider_i);
+    this.memo.put(key, n);
+    return n;
+  }
+
   public int[] maxSumOfThreeSubarrays(int[] nums, int k) {
-    int n = nums.length;
-    int[] window = new int[n];
+    this.memo = new HashMap<>();
+    ArrayList<Integer> ans = new ArrayList<>();
+    int count = 3;
+    ArrayList<Integer> prefix = new ArrayList<>();
+    int i = 0, j = 0;
     int sum = 0;
-    for (int i = 0; i < n; i++) {
-      sum += nums[i];
-      if (i >= k) sum -= nums[i - k];
-      if (i >= k - 1) window[i - k + 1] = sum;
-    }
-
-    int[] left = new int[n];
-    int best = 0;
-    for (int i = 0; i < n; i++) {
-      if (window[i] > window[best]) best = i;
-      left[i] = best;
-    }
-
-    int[] right = new int[n];
-    best = n - k;
-    for (int i = n - k; i >= 0; i--) {
-      if (window[i] >= window[best]) best = i;
-      right[i] = best;
-    }
-
-    int[] ans = new int[] { -1, -1, -1 };
-    int maxTotal = 0;
-
-    for (int mid = k; mid <= n - 2 * k; mid++) {
-      int l = left[mid - k];
-      int r = right[mid + k];
-
-      int total = window[l] + window[mid] + window[r];
-
-      if (ans[0] == -1 || total > maxTotal) {
-        maxTotal = total;
-        ans[0] = l;
-        ans[1] = mid;
-        ans[2] = r;
+    for (j = 0; j < nums.length; j++) {
+      sum += nums[j];
+      if (j - i + 1 == k) {
+        prefix.add(sum);
+        sum -= nums[i];
+        i++;
       }
     }
 
-    return ans;
+    solve(0, ans, nums, k, count, prefix);
+
+    return this.buff;
+  }
+}
+
+public class _689_Maximum_Sum_of_3_Non_Overlapping_Subarrays {
+
+  public static void main(String[] args) {
+    System.out.println(
+      Arrays.toString(
+        new Solution()
+          .maxSumOfThreeSubarrays(new int[] { 1, 2, 1, 2, 6, 7, 5, 1 }, 2)
+      )
+    );
   }
 }
