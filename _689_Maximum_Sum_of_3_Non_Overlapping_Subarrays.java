@@ -75,7 +75,7 @@ class Solution {
       this.buff = ans.stream().mapToInt(Integer::intValue).toArray();
       return;
     }
-    if (index >= nums.length) return;
+    if (index >= prefix.size()) return;
 
     int consider_i =
       prefix.get(index) + presolve(index + k, ans, nums, k, count - 1, prefix);
